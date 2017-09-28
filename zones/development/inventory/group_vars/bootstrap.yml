@@ -1,0 +1,82 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+coreos_channel: "stable"
+coreos_version: "1409.7.0"
+k8s_version: "v1.5.2_coreos.2"
+container_runtime: docker
+ops_public_interface: eth2
+ops_management_interface: eth1
+ops_management_ip: 10.252.0.2
+
+flanneld_interface: eth1
+dhcp_ranges:
+    - 10.252.0.10,10.252.0.200,255.255.255.0,12h
+    - 10.220.220.10,10.220.220.200,255.255.255.0,12h
+additional_interfaces:
+  eth2: 10.220.220.2/24
+additional_gateways:
+  eth1: ""
+  eth2: ""
+manually_grow_root: false
+pxe_boot: true
+pxe_chainload: true
+mounts: []
+disks:
+  - device: /dev/sda
+    wipe_table: true
+    partitions:
+      - label: ROOT
+        number: 0
+
+filesystems:
+  - device: "/dev/sda9"
+    format: "ext4"
+    create:
+      force: true
+      options:
+          - "-LROOT"
+
+deploy_jeeves: False
+ssh_keys:
+  - "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"
+k8s_apiserver_advertise_address: 10.252.0.12
+matchbox_dir: "{{files_dir}}/matchbox"
+files_dir: /opt/ice-devkit
+assets_dir: "{{files_dir}}/assets"
+coreos_assets_dir: "{{assets_dir}}/coreos/{{coreos_version}}"

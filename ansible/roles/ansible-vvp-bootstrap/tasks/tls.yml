@@ -1,0 +1,150 @@
+# -*- encoding: utf-8 -*-
+# ============LICENSE_START=======================================================
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+- name: create TLS dir
+  file:
+    state: directory
+    path: "{{files_dir}}/tls"
+    mode: 0755
+  tags:
+  - bootstrap
+  - tls
+
+- name: create TLS dir
+  file:
+    state: directory
+    path: "{{assets_dir}}/tls"
+    mode: 0755
+  tags:
+  - bootstrap
+  - tls
+
+- stat: path="{{files_dir}}/tls/ca-key.pem"
+  register: ca_key
+
+- name: create root CA
+  shell: openssl genrsa -out {{files_dir}}/tls/ca-key.pem 2048
+  when: not ca_key.stat.exists
+
+- stat: path="{{files_dir}}/tls/ca.pem"
+  register: ca
+
+- name: create self signed cert
+  shell: openssl req -x509 -new -nodes -key {{files_dir}}/tls/ca-key.pem -days 10000 -out {{files_dir}}/tls/ca.pem -subj "/CN=kube-ca"
+  when: not ca.stat.exists
+
+- name: Generate Config File
+  template:
+    src: openssl.config.j2
+    dest: "{{files_dir}}/tls/{{item}}-openssl.config"
+  with_items:
+  - admin
+  - apiserver
+  - worker
+
+- stat: path={{files_dir}}/tls/{{item}}-key.pem
+  register: keyfiles
+  with_items:
+  - admin
+  - apiserver
+  - worker
+
+- name: create keyfile
+  shell: openssl genrsa -out {{files_dir}}/tls/{{item.item}}-key.pem 2048
+  with_items: "{{keyfiles.results}}"
+  when: not item.stat.exists
+
+- stat: path={{files_dir}}/tls/{{item}}.csr
+  register: csr_files
+  with_items:
+  - admin
+  - apiserver
+  - worker
+
+- name: Create csr
+  shell: openssl req -new -key {{files_dir}}/tls/{{item.item}}-key.pem -out {{files_dir}}/tls/{{item.item}}.csr -subj "/CN=kube-{{item.item}}" -config {{files_dir}}/tls/{{item.item}}-openssl.config
+  with_items: "{{csr_files.results}}"
+  when: not item.stat.exists
+
+- stat: path={{files_dir}}/tls/{{item}}.pem
+  register: pem_files
+  with_items:
+  - admin
+  - apiserver
+  - worker
+
+- name: Create pemfile
+  shell: openssl x509 -req -in {{files_dir}}/tls/{{item.item}}.csr -CA {{files_dir}}/tls/ca.pem -CAkey {{files_dir}}/tls/ca-key.pem -CAcreateserial -out {{files_dir}}/tls/{{item.item}}.pem -days 365 -extensions v3_req -extfile {{files_dir}}/tls/{{item.item}}-openssl.config
+  with_items: "{{pem_files.results}}"
+  when: not item.stat.exists
+
+- name: Copy tls related files to assets
+  copy:
+    src: "{{files_dir}}/{{item}}"
+    dest: "{{assets_dir}}/{{item}}"
+    remote_src: yes
+    backup: yes
+  with_items:
+    - tls/apiserver-key.pem
+    - tls/apiserver.pem
+    - tls/ca.pem
+    - tls/worker-key.pem
+    - tls/worker.pem
+
+- name: Encode Admin Cert
+  shell: base64 -w 0 {{files_dir}}/tls/admin.pem
+  register: ADMIN_CERT_BASE64
+
+- name: Encode Admin Key
+  shell: base64 -w 0 {{files_dir}}/tls/admin-key.pem
+  register: ADMIN_KEY_BASE64
+
+- name: Encode CA Cert
+  shell: base64 -w 0 {{files_dir}}/tls/ca.pem
+  register: CA_CERT_BASE64
+
+- name: Render kubeconfig
+  template:
+    src: kubeconfig.j2
+    dest: "{{files_dir}}/kubeconfig"
+
+- name: Fetch the new kubeconfig
+  fetch:
+    src: "{{files_dir}}/kubeconfig"
+    dest: "{{inventory_dir}}/../k8/"
+    flat: yes

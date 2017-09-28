@@ -1,0 +1,137 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+- name: Create assets directory
+  file: path="{{coreos_assets_dir}}" state=directory mode="0755"
+  tags:
+    - bootstrap
+    - matchbox
+
+- name: Download PXE image
+  get_url: url="http://{{coreos_channel}}.release.core-os.net/amd64-usr/{{coreos_version}}/{{item}}" dest="{{coreos_assets_dir}}/{{item}}"
+  with_items:
+    - "coreos_production_pxe.vmlinuz"
+    - "coreos_production_pxe.vmlinuz.sig"
+    - "coreos_production_pxe_image.cpio.gz"
+    - "coreos_production_pxe_image.cpio.gz.sig"
+    - "coreos_production_image.bin.bz2"
+    - "coreos_production_image.bin.bz2.sig"
+  tags:
+    - bootstrap
+    - matchbox
+
+- name: Retrieve the signing key
+  get_url: url="https://coreos.com/security/image-signing-key/CoreOS_Image_Signing_Key.asc" dest="{{coreos_assets_dir}}/CoreOS_Image_Signing_Key.asc"
+  tags:
+    - bootstrap
+    - matchbox
+
+- name: Import signing key
+  command: "gpg --import {{coreos_assets_dir}}/CoreOS_Image_Signing_Key.asc"
+  tags:
+    - bootstrap
+    - matchbox
+
+- name: Adding trust for CoreOS Signing key
+  command: 'echo "04126D0BFABEC8871FFB2CCE50E0885593D2DCB4:6:" | gpg --import-ownertrust'
+  tags:
+    - bootstrap
+    - matchbox
+
+- name: Verifying vmlinuz
+  command: "gpg --verify {{coreos_assets_dir}}/{{item}}"
+  with_items:
+    - "coreos_production_pxe.vmlinuz.sig"
+    - "coreos_production_pxe_image.cpio.gz.sig"
+  tags:
+    - bootstrap
+    - matchbox
+
+
+- name: Create matchbox directory
+  file: path="{{matchbox_dir}}" state=directory mode=0754
+  tags:
+    - bootstrap
+    - matchbox
+
+- name: Create groups, profiles and ignition directories
+  file: path="{{matchbox_dir}}/{{item}}" state=directory mode=0754
+  with_items:
+    - groups
+    - profiles
+    - ignition
+
+- name: matchbox k7 groups templates
+  template:
+    src: "groups/group.json.j2"
+    dest: "{{matchbox_dir}}/groups/{{item.name}}.json"
+  with_items: "{{hosts}}"
+  when: item.os == "coreos"
+
+- name: Allow Inbound 8080 web requests
+  shell: iptables -A INPUT -p udp --dport 8080 -i {{ops_management_interface}} -j ACCEPT
+
+- name: Allow Outbound 8080 web replies
+  shell: iptables -A OUTPUT -p udp --sport 8080 -o {{ops_management_interface}} -j ACCEPT
+
+- name: Create TLS assets directory
+  file: path="{{assets_dir}}/tls" state=directory mode=643
+
+- name: matchbox k8 other templates
+  template:
+    src: "{{item}}.j2"
+    dest: "{{matchbox_dir}}/{{item}}"
+  with_items:
+    - groups/install.json
+    - profiles/controller.json
+    - profiles/worker.json
+    - profiles/install-reboot.json
+    - ignition/controller.yaml
+    - ignition/coreos-install.yaml
+    - ignition/worker.yaml
+
+- name: Is matchbox already running?
+  shell: docker ps | grep matchbox | awk '{ print $1 }'
+  register: matchbox_id
+
+- name: Kill matchbox!
+  shell: docker kill {{matchbox_id.stdout}}
+  when: matchbox_id.stdout != ""
+
+- name: matchbox docker
+  command: docker run -d -p {{ops_management_ip}}:8080:8080 -v {{assets_dir}}:/assets:Z -v {{matchbox_dir}}:/var/lib/matchbox:Z quay.io/coreos/matchbox:v0.5.0 -address=0.0.0.0:8080 -log-level=debug -assets-path=/assets

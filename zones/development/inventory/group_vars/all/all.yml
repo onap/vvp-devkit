@@ -1,0 +1,88 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+---
+hosts:
+  - name: "coreos-01"
+    ssh_ip: 10.0.2.15
+    mac: "08:00:27:66:95:9E"
+    dnsmasq_config:
+      - "08:00:27:66:95:9E,10.252.0.12,coreos-01,infinite,set:coreos"
+      - "08:00:27:66:95:8E,10.220.220.12,coreos-01,infinite,set:coreos"
+    os: coreos
+    role: controller
+    etcd_role: member
+
+  - name: "coreos-02"
+    ssh_ip: 10.0.2.15
+    mac: "08:00:27:66:95:9F"
+    dnsmasq_config:
+      - "08:00:27:66:95:9F,10.252.0.13,coreos-02,infinite,set:coreos"
+      - "08:00:27:66:95:8F,10.220.220.13,coreos-02,infinite,set:coreos"
+    os: coreos
+    role: worker
+    etcd_role: member
+
+  - name: "coreos-03"
+    ssh_ip: 10.0.2.15
+    mac: "08:00:27:66:95:A0"
+    dnsmasq_config:
+      - "08:00:27:66:95:A0,10.252.0.14,coreos-03,infinite,set:coreos"
+      - "08:00:27:66:95:A3,10.220.220.14,coreos-03,infinite,set:coreos"
+    os: coreos
+    role: worker
+    etcd_role: member
+
+  - name: "ceph-01"
+    ssh_ip: 10.0.2.15
+    dnsmasq_config:
+      - "08:00:27:66:95:A1,10.252.0.21,ceph-01,infinite"
+    os: centos
+    role: ""
+    etcd_role: ""
+ice_environment: development
+domain: development.vvp.example.com
+k8s_controller_port: 8443
+
+fetch_directory: "{{inventory_dir}}/../fetch"
+mon_ips:
+  - 10.252.0.21
+rgws:
+  - name: ceph-01
+    ip: 10.252.0.21
+radosgw_civetweb_port: "8080"

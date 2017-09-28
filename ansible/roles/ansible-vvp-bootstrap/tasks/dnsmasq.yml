@@ -1,0 +1,103 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+- name: Install nf_conntrack_tftp
+  modprobe:
+    name: nf_conntrack_tftp
+    state: present
+
+- name: Copy our pxe client
+  copy: src=iceundionly.kpxe dest="{{files_dir}}/iceundionly.kpxe"
+  when: pxe_chainload
+
+- name: Create DNSMASQ leases file
+  file: path="{{files_dir}}/leases" mode=0644 state=touch
+
+- name: DROP DNS, tftp requests from public
+  shell: iptables -I INPUT 1 -p udp --dport {{item}} -i {{ops_public_interface}} -j DROP
+  with_items:
+  - 53
+  - 69
+
+- name: DROP DNS, tftp requests to public
+  shell: iptables -I OUTPUT 1 -p udp --sport {{item}} -o {{ops_public_interface}} -j DROP
+  with_items:
+  - 53
+  - 69
+
+- name: Allow Inbound UDP DHCP Requests
+  shell: iptables -A INPUT -p udp --dport {{item}} -j ACCEPT
+  with_items:
+  - 53
+  - 67:69
+
+- name: Allow Outbound UDP DNS, DHCP
+  shell: iptables -A OUTPUT -p udp --sport {{item}} -j ACCEPT
+  with_items:
+  - 53
+  - 67:69
+
+- name: Allow TFTP file transfers on arbitrary ports.
+  shell: 'iptables -A OUTPUT -p udp -o {{ ops_management_interface }} --sport 1023: --dport 1024: -m state --state ESTABLISHED,RELATED -j ACCEPT'
+
+- name: Allow TFTP file transfers on arbitrary ports.
+  shell: 'iptables -A INPUT -p udp -i {{ops_management_interface}} --dport 1023: -m state --state ESTABLISHED,RELATED -j ACCEPT'
+
+- name: Render DNSMASQ configuration
+  template:
+    src: dnsmasq.conf.j2
+    dest: "{{files_dir}}/dnsmasq.conf"
+
+- name: Is dnsmasq already running?
+  shell: docker ps | grep dnsmasq | awk '{ print $1 }'
+  register: dnsmasq_id
+
+- name: Kill dnsmasq!
+  shell: docker kill "{{dnsmasq_id.stdout}}"
+  when: dnsmasq_id.stdout != ""
+
+- name: Start DNSMASQ
+  command: "docker run -d
+    --net=host
+    --cap-add=NET_ADMIN
+    -v {{files_dir}}/leases:/var/lib/misc/dnsmasq.leases:Z
+    -v {{files_dir}}/dnsmasq.conf:/etc/dnsmasq.conf:Z
+{% if pxe_chainload %}
+    -v {{files_dir}}/iceundionly.kpxe:/var/lib/tftpboot/iceundionly.kpxe:Z
+{% endif %}
+    quay.io/coreos/dnsmasq -d -q"

@@ -1,0 +1,121 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+# -*- mode: ruby -*-
+# # vi: set ft=ruby :
+require_relative 'lib/vagrant_provision.rb'
+
+Vagrant.require_version ">= 1.6.0"
+if ENV["VVP_DEVKIT"].nil? or ENV["VVP_DEVKIT"].downcase == "single"
+  yaml_conf = YAML.load_file(File.join(File.dirname(__FILE__),'single_node_config.yml'))
+else
+  yaml_conf = YAML.load_file(File.join(File.dirname(__FILE__),'multi_node_config.yml'))
+end
+
+Vagrant.configure("2") do |config|
+
+  # always use Vagrant's insecure key
+  config.ssh.insert_key = false
+
+  # plugin conflict
+  if Vagrant.has_plugin?("vagrant-vbguest") then
+    config.vbguest.auto_update = false
+  end
+
+  yaml_conf["boxen"].each do |box|
+    config.vm.define box["name"] do |conf|
+      conf.vm.box = box["box"]
+      conf.vm.network :forwarded_port, guest: 22, host: box["vagrant_ssh_port"], id: "ssh"
+      conf.vm.box_check_update = false
+      conf.vm.synced_folder '.', '/vagrant', disabled: true
+      ["vmware_fusion", "vmware_workstation"].each do |vmware|
+        conf.vm.provider vmware do |v, override|
+          v.vmx['numvcpus'] = box["cpus"]
+          v.vmx['memsize'] = box["memory"]
+          v.gui = false
+
+          override.vm.box_url = "http://%s.release.core-os.net/amd64-usr/current/coreos_production_vagrant_vmware_fusion.json" % $update_channel
+        end # vmware
+      end # override
+
+      conf.vm.provider :virtualbox do |v|
+        v.cpus = box["cpus"]
+        v.gui = false
+        v.memory = box["memory"]
+
+        # On VirtualBox, we don't have guest additions or a functional vboxsf
+        # in CoreOS, so tell Vagrant that so it can be smarter.
+        v.check_guest_additions = false
+        v.functional_vboxsf     = false
+
+        if box["groups"].include? "coreos" then
+          # Vagrant overrides Virtualbox's default which causes 5-10s slowdown for
+          # dns queries in kubernetes containers. Turn it back off!
+          v.customize ["modifyvm", :id, "--natdnsproxy1", "off"]
+          v.customize ["modifyvm", :id, "--natdnshostresolver1", "off"]
+        end
+
+        # TODO: move to custom ceph image if possible
+        ceph_disk = File.join(File.dirname(__FILE__), 'files', 'ceph_disk.vdi')
+        if box["groups"].include? "osds" then
+          v.customize ['createhd', '--filename', ceph_disk, '--size', 500 * 1024] unless File.exists? ceph_disk
+          v.customize ['storageattach', :id, '--storagectl', "IDE", '--port', 1, '--device', 0, '--type', 'hdd', '--medium', ceph_disk]
+        end
+
+      end # v
+
+      conf.vm.network :private_network,
+        :adapter => 2,
+        :ip  => box["ips"][0],
+        :mac => box["macs"][0],
+        :nic_type => "virtio"
+
+      conf.vm.network :private_network,
+        :adapter => 3,
+        :ip  => box["ips"][1],
+        :mac => box["macs"][1],
+        :nic_type => "virtio",
+        :type => :static
+
+      if box["groups"].include? "centos" then
+        conf.vm.provision "shell", inline: "systemctl restart NetworkManager; ifdown eth1; ifup eth1"
+      end
+      provision(box, yaml_conf["boxen"], yaml_conf["hosts"], conf)
+    end # conf
+  end # box
+end # config

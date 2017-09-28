@@ -1,0 +1,122 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+---
+# cert for secure https
+# https://stackoverflow.com/questions/10175812/how-to-create-a-self-signed-certificate-with-openssl#10176685
+# site_pem_cert:
+# site_pem_key:
+# site_pem: |
+#     {{site_pem_cert}}
+#     {{site_pem_key}}
+site_pem:
+
+# EM database
+vault_em_postgresql_user: em_postgresuser
+vault_em_postgresql_password: em_postgrespass
+
+# CMS database
+vault_cms_postgresql_user: cms_postgresuser
+vault_cms_postgresql_password: cms_postgrespass
+
+# EM Secret Key
+# >>> from django.core.management.utils import get_random_secret_key
+# >>> get_random_secret_key()
+vault_em_secret_key: "#91e__w3k=781@y(e_#6hu6t&h254#u)&bj+m9thx%k!6^*06r"
+
+# Information for sending email from the platform
+vault_email_host: 'localhost'
+vault_email_host_user:
+vault_email_host_password:
+
+# authentication for image hosting service
+# TODO: Debrand
+vault_quay_user:
+vault_quay_password:
+
+# pwgen -1 32
+vault_engagementmgr_webhook_token: Aip7ohx1eiHaeshoh9shailu9eex7tha
+
+# pwgen -1 20
+vault_gitlab_authentication_token: jadu6yohjaiy8Wob0IeK
+
+#pwget -1 16
+vault_jenkins_admin_password: koiyeBaiTh3kaiNg
+vault_gitlab_admin_password: ao6ij6wohWeiqu4e
+
+# python3 -c 'import bcrypt as b;print(b.hashpw(b"<password>",b.gensalt(rounds=10, prefix=b"2a")).decode())'
+vault_jenkins_admin_password_hash: $10$n2WJZasbQkd8PdySxQDo1uB67Wv7QfG0tvKuidbLC4w1Ss6p3eZEq
+
+# ssh-keygen -t ed25519
+vault_jenkins_deploy_key: | 
+  -----BEGIN OPENSSH PRIVATE KEY-----
+  b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+  QyNTUxOQAAACCD10jzo4iRf1xm63IlLHJFy5T+AhRufzvKvgi0HpgTUAAAAJjWwJd91sCX
+  fQAAAAtzc2gtZWQyNTUxOQAAACCD10jzo4iRf1xm63IlLHJFy5T+AhRufzvKvgi0HpgTUA
+  AAAEAWFKMWLl6FgEBug971+atNYBt8GduWzCYgt/j9Tu4Sh4PXSPOjiJF/XGbrciUsckXL
+  lP4CFG5/O8q+CLQemBNQAAAAE3BhdWxAUGF1bCdzIE1hYyBQcm8BAg==
+  -----END OPENSSH PRIVATE KEY-----
+vault_jenkins_deploy_key_pub: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIPXSPOjiJF/XGbrciUsckXLlP4CFG5/O8q+CLQemBNQ
+
+#CI application
+vault_ci_sqlite_user: cidbuser
+vault_ci_postgresql_password: cidbpass
+vault_ci_admin_user: ciadminuser
+vault_ci_admin_mail: ciadminmail@example.com
+vault_ci_admin_password: ciadminpass
+
+vault_cms_secret_key: (+dm_rj(005=^evzesd3#xpy$-$c^j#clzilbx&_=0lh7o-34#
+vault_cms_nevercache_key: a_j-g5h+3)o@2wiasmbg(huxpujh=95(p-$vz1xj&t+m)+-u84
+
+#CMS application
+vault_cms_app_user: cmsappuser
+vault_cms_app_user_password: cmsappuserpassword
+vault_cms_app_user_mail: cmsappuser@example.com
+# pwgen -1 40
+vault_cms_app_client_id: EeB4Xeimooc6xieSeeKah8dae1eipae4otaeshee
+# pwgen -1 128
+vault_cms_app_client_secret: haiMoopieZee1wei3lef4gaeyia2vahwohth0maid9ith2pheeshaithuToor2Johshei5baey7Eiquaetheib8quaiquee7phiath7eub2aiNaic3ou9vaizebeiF5u
+vault_haproxy_user: haproxyuser
+vault_haproxy_pass: haproxypass
+
+# simplifies conditionals that check for e.g. 'vault_slack_tokens.notifications is defined'
+vault_slack_tokens:
+
+# Rados Gateway (Amazon S3-protocol Ceph interface)
+vault_aws_access_key_id: 2ZB19U9D8K6XVJG75VX0
+vault_aws_secret_access_key: 7xVWeqsLIotKOua0xvhapIsCt1VU0x6M2E4fTRKO

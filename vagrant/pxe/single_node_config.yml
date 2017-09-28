@@ -1,0 +1,88 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+boxen:
+  - name: ops-01
+    box: centos/7
+    ips: ['10.252.0.2', "10.220.220.2"]
+    macs: []
+    cpus: 1
+    cpu: "50"
+    memory: "1024"
+    groups: ["bootstrap", "centos",]
+    vagrant_ssh_port: 2502
+
+  - name: ceph-01
+    box: centos/7
+    ips: ["10.252.0.21", "10.220.220.21"]
+    cpus: 2
+    cpu: 50
+    memory: 1024
+    macs: ["0800276695A1","0800276695A2"]
+    groups: ["ceph", "osds", "mons", "rgws", "rbdhost", "centos"]
+    vagrant_ssh_port: 2521
+
+  - name: coreos-01
+    box: vvp-empty
+    cpus: 1
+    cpu: 50
+    memory: 4096
+    macs: ["08002766959E","08002766958E"]
+    ips: ["10.252.0.12", "10.220.220.12"]
+    groups: ["coreos", "container-hosts", "fleetctl-host"]
+    vagrant_ssh_port: 2512
+
+
+hosts:
+  - name: "coreos-01"
+    ssh_ip: 10.0.2.15
+    mac: "08:00:27:66:95:9E"
+    dnsmasq_config:
+      - "08:00:27:66:95:9E,10.252.0.12,coreos-01,infinite,set:coreos"
+      - "08:00:27:66:95:8E,10.220.220.12,coreos-01,infinite,set:coreos"
+    os: coreos
+    role: controller
+    etcd_role: member
+
+  - name: "ceph-01"
+    ssh_ip: 10.0.2.15
+    dnsmasq_config:
+      - "08:00:27:66:95:A1,10.252.0.21,ceph-01,infinite"
+    os: centos
+    role: ""
+    etcd_role: ""
