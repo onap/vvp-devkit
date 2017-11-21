@@ -1,0 +1,105 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ext-haproxy
+  labels:
+    run: ext-haproxy
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    name: web
+  - port: 443
+    protocol: TCP
+    name: ssl
+  - port: 22
+    protocol: TCP
+    name: ssh
+  - port: 9000
+    protocol: TCP
+    name: stats
+  externalIPs:
+{% for ip in external_ips %}
+  - "{{ ip }}"
+{% endfor %}
+  selector:
+    run: ext-haproxy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: int-haproxy
+  labels:
+    run: int-haproxy
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    name: web
+  - port: 8080
+    protocol: TCP
+    name: jenkins
+  - port: 9000
+    protocol: TCP
+    name: stats
+  externalIPs:
+{% for ip in internal_ips %}
+  - "{{ ip }}"
+{% endfor %}
+  selector:
+    run: int-haproxy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ext-haproxy-stats
+  labels:
+    run: ext-haproxy-stats
+spec:
+  ports:
+  - port: 9001
+    protocol: TCP
+    name: stats
+  externalIPs:
+  - "{{ internal_ips[0] }}"
+  selector:
+    run: ext-haproxy

@@ -1,0 +1,70 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+- debug:
+    msg: "{{volume_name}} {{pool_name}} {{snap_name}} {{timestamp}}"
+
+- name: Create a new snapshot
+  shell: rbd snap create {{pool_name}}/{{volume_name}}@{{timestamp}}_{{snap_name}}
+  become: True
+
+- name: Get number of existing snaps
+  shell: rbd snap list --pool {{pool_name}} {{volume_name}} | grep -P "^\s*[0-9]*\s.*{{snap_name}}" | wc -l
+  register: num_of_rbd_snaps
+  become: True
+
+- name: Get oldest snaps list
+  shell: rbd snap list --pool {{pool_name}} {{volume_name}} | grep -P "^\s*[0-9]*\s.*_{{snap_name}}" | awk '{ print $2}' | awk -F"_" '{print $1}' | sort -n -r | tail -n+{{num_keep_snaps|int + 1}}
+  register: list_of_rbds
+  when: num_of_rbd_snaps.stdout|int > num_keep_snaps|int
+  become: True
+
+- debug:
+    msg: "{{list_of_rbds}}"
+
+- debug:
+    msg: "{{num_of_rbd_snaps.stdout}} {{num_keep_snaps}} {{num_keep_snaps|int < num_of_rbd_snaps.stdout|int}}"
+
+- name: Delete oldest snaps
+  shell: rbd --pool {{pool_name}} snap rm --snap {{item}}_{{snap_name}} {{volume_name}}
+  when: list_of_rbds.skipped is not defined and
+        list_of_rbds.stdout_lines != "" and
+        num_of_rbd_snaps.stdout|int > num_keep_snaps|int  and
+        (ansible_date_time.epoch|int - item|int) / 86400|int >= days_keep_snaps|int
+  with_items: "{{list_of_rbds.stdout_lines}}"
+  become: True

@@ -1,0 +1,108 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: postgresql
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: postgresql
+    spec:
+      containers:
+      - name: postgresql
+        image: {{container_uri}}rkt-postgresql:{{container_tag}}
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgresql-data
+        - mountPath: /etc/postgresql/conf.d/
+          name: postgresql-conf
+        - mountPath: /docker-entrypoint-initdb.d/
+          name: postgresql-initdb
+        env:
+        - name: POSTGRES_DB
+          value: icedb
+        - name: ICE_CMS_DB_NAME
+          value: icecmsdb
+        - name: POSTGRES_USER
+          value: {{vault_em_postgresql_user}}
+        - name: ICE_CMS_DB_USER
+          value: {{vault_cms_postgresql_user}}
+        - name: ICE_CMS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-passwords
+              key: cmsPassword
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-passwords
+              key: emPassword
+{% if enable_liveness_probes %}
+        livenessProbe:
+          timeoutSeconds: 1
+          initialDelaySeconds: {{livenessProbe_initialDelaySeconds.postgresql | default(120)}}
+          tcpSocket:
+            port: 5432
+{% endif %}
+      volumes:
+      - name: postgresql-data
+        rbd:
+          monitors:
+{% for ip in mon_ips  %}
+          - "{{ ip }}"
+{% endfor %}
+          pool: rbd
+          image: em_postgresql
+          user: admin
+          secretRef:
+            name: "ceph-secret"
+          fsType: xfs
+          readOnly: false
+      - name: postgresql-conf
+        configMap:
+          name: postgresql-conf
+      - name: postgresql-initdb
+        configMap:
+          name: postgresql-initdb

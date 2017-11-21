@@ -1,0 +1,198 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: ext-haproxy-cfg
+  namespace: default
+data:
+  file: |
+   resolvers dns
+       nameserver pod_dns "10.3.0.10:53"
+       resolve_retries    3
+       timeout retry      1s
+       hold valid         30s
+
+   defaults
+       mode http
+       timeout connect 5000ms
+       timeout client 50000ms
+       timeout server 50000ms
+       option httpclose
+       option redispatch
+       option abortonclose
+       option httplog
+       option dontlognull
+       default-server init-addr last,libc,none
+
+   backend gitlab_ssh
+       mode tcp
+       option tcplog
+       timeout server 2h
+       server gitlabssh gitlab:22 resolvers dns
+
+   frontend gitlab_ssh_frontend
+       mode tcp
+       option tcplog
+       timeout client 2h
+       bind 0.0.0.0:22
+       acl is_ssh dst_port 22
+       use_backend gitlab_ssh if is_ssh
+
+   backend portal_backend
+       mode http
+       server ice_portal portal:8181 resolvers dns
+
+   backend api
+       mode http
+       server engagement_manager em:80 resolvers dns
+
+   backend s3
+       mode http
+       balance roundrobin
+       option httpchk HEAD /
+{% for host in rgws %}
+       server {{ host['name'] }} {{ host['ip'] }}:{{ hostvars[host['name']]['radosgw_civetweb_port'] }} check inter 10000ms
+{% endfor %}
+
+   frontend portal
+       mode http
+       redirect scheme https if !{ ssl_fc }
+       acl is_api_call path_beg -i /ice
+       acl is_s3       hdr_beg(host) s3.  staging-s3.  dev-s3.
+       use_backend api if is_api_call
+       use_backend s3 if is_s3
+       bind 0.0.0.0:80
+       bind 0.0.0.0:443 ssl crt /etc/haproxy/site.pem force-tlsv12
+       default_backend portal_backend
+
+   listen stats
+       bind 0.0.0.0:9001
+       mode http
+       stats enable  # Enable stats page
+       stats realm Haproxy\ Statistics
+       stats uri /haproxy_stats
+       stats auth "${HAPROXY_USER}:${HAPROXY_PASS}"
+       acl network_allowed src 10.252.0.0/16 127.0.0.1/32 10.2.0.0/16
+       http-request deny if !network_allowed
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: int-haproxy-cfg
+  namespace: default
+data:
+  file: |
+   resolvers dns
+       nameserver pod_dns "10.3.0.10:53"
+       resolve_retries    3
+       timeout retry      1s
+       hold valid         30s
+
+   defaults
+       mode http
+       timeout connect 5000ms
+       timeout client 50000ms
+       timeout server 50000ms
+       option httpclose
+       option redispatch
+       option abortonclose
+       option httplog
+       option dontlognull
+       default-server init-addr last,libc,none
+
+   backend gitlab_web_backend
+       mode http
+       server gitlab_web_1 gitlab:80 resolvers dns
+
+   frontend gitlab_web
+       mode http
+       bind 0.0.0.0:80
+
+       acl is_scanner  path_beg /imagescanner
+       acl is_em_admin hdr_beg(host) em.  staging-em.  dev-em.
+       acl is_cms      hdr_beg(host) cms. staging-cms. dev-cms.
+       acl is_ci_admin hdr_beg(host)      staging-ci.  dev-ci.
+       acl is_s3       hdr_beg(host) s3.  staging-s3.  dev-s3.
+
+       use_backend imagescanner if is_em_admin is_scanner
+       use_backend cms if is_cms
+       use_backend api if is_em_admin
+       use_backend ci  if is_ci_admin
+       use_backend s3  if is_s3
+
+       default_backend gitlab_web_backend
+
+   backend s3
+       mode http
+       balance roundrobin
+{% for host in rgws %}
+       server {{ host['name'] }} {{ host['ip'] }}:{{ hostvars[host['name']]['radosgw_civetweb_port'] }}
+{% endfor %}
+
+   backend cms
+     mode http
+     server cms_server cms:80 resolvers dns
+
+   backend api
+       mode http
+       server engagement_manager em:80 resolvers dns
+
+   backend ci
+       mode http
+       server ci_test ci:8282 resolvers dns
+
+   listen jenkins
+       bind 0.0.0.0:8080
+       server jenkins jenkins:8080 resolvers dns
+
+   backend imagescanner
+       mode http
+       server imagescanner imagescanner:80 resolvers dns
+
+   listen stats
+       bind 0.0.0.0:9000
+       mode http
+       stats enable  # Enable stats page
+       stats realm Haproxy\ Statistics
+       stats uri /haproxy_stats
+       stats auth "${HAPROXY_USER}:${HAPROXY_PASS}"
+       acl network_allowed src 10.252.0.0/16 127.0.0.1/32 10.2.0.0/16
+       block if !network_allowed

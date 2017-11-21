@@ -1,0 +1,165 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+---
+{% if ice_environment != 'production' %}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ci-uwsgi
+spec:
+  template:
+    spec:
+      volumes:
+      - name: ci-settings
+        configMap:
+          name: ci-settings
+      - name: site-crt
+        secret:
+          secretName: site-crt
+{% if devenv is defined %}
+      - name: ci-rsync
+        hostPath:
+          path: /var/devenv/ice-ci/
+{% endif %}
+      containers:
+      - name: ci-uwsgi
+        image: {{container_uri}}rkt-ice-ci:{{container_tag}}
+        ports:
+        - containerPort: 80
+        - containerPort: 8282
+        - containerPort: 9000
+        volumeMounts:
+        - name: ci-settings
+          mountPath: /opt/configmaps/settings/
+        - name: site-crt
+          mountPath: /opt/secrets/site-crt/
+{% if devenv is defined %}
+        - name: ci-rsync
+          mountPath: /app
+{% endif %}
+        env:
+        - name: ICE_ENVIRONMENT
+          value: "{{ice_environment}}"
+        - name: PROGRAM_NAME_URL_PREFIX
+          value: "ice"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: key}
+        - name: EM_DB_HOST
+          value: postgresql
+        - name: EM_DB_PORT
+          value: "5432"
+        - name: EM_DB_NAME
+          value: icedb
+        - name: EM_DB_USER
+          value: "{{vault_em_postgresql_user}}"
+        - name: EM_DB_PASSWORD
+          valueFrom:
+            secretKeyRef: {name: postgresql-passwords, key: emPassword}
+        - name: CMS_DB_HOST
+          value: postgresql
+        - name: CMS_DB_PORT
+          value: "5432"
+        - name: CMS_DB_NAME
+          value: "{{cms_postgresql_db|default('icecmsdb')}}"
+        - name: CMS_DB_USER
+          value: "{{vault_cms_postgresql_user}}"
+        - name: CMS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef: {name: postgresql-passwords, key: cmsPassword}
+        - name: CI_DB_HOST
+          value: postgresql
+        - name: CI_DB_PORT
+          value: "5432"
+        - name: CI_DB_NAME
+          value: icedb
+        - name: CI_DB_USER
+          value: "{{vault_em_postgresql_user}}"
+        - name: CI_DB_PASSWORD
+          valueFrom:
+            secretKeyRef: {name: postgresql-passwords, key: ciPassword}
+        - name: STATIC_ROOT
+          value: "/app/htdocs"
+        - name: ICE_CONTACT_FROM_ADDRESS
+          value: "{{vault_email_host_user}}"
+        - name: SECRET_WEBHOOK_TOKEN
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: em_webhook_token}
+        - name: SECRET_GITLAB_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef: {name: gitlab-password, key: auth-token}
+        - name: SECRET_JENKINS_PASSWORD
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: jenkins_admin_password}
+        - name: ICE_DOMAIN
+          value: https://{{domain}}
+        - name: ICE_EM_DOMAIN_NAME
+          value: https://{{em_domain_name}}
+        - name: OAUTHLIB_INSECURE_TRANSPORT
+          value: "1"
+        - name: CI_ADMIN_USER
+          value: "{{vault_ci_admin_user}}"
+        - name: CI_ADMIN_MAIL
+          value: "{{vault_ci_admin_mail}}"
+        - name: CI_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef: {name: ci-secret, key: admin_password}
+        - name: S3_HOST
+          value: "{{s3_dns_name}}"
+        - name: S3_PORT
+          value: "443"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: aws_access_key_id}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: aws_secret_access_key}
+{% if enable_liveness_probes %}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9000
+          initialDelaySeconds: 90
+          periodSeconds: 15
+{% endif %}
+        command: ["/app/docker-entrypoint.sh", "/usr/local/bin/uwsgi", "--ini", "/opt/configmaps/settings/uwsgi.ini", "--static-map", "/static=/app/htdocs" {% if devenv is defined %}, "--py-auto-reload" , "3"{% endif %}]
+    metadata:
+      labels:
+        run: ci-uwsgi
+{% endif %}

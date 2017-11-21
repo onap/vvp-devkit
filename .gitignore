@@ -1,10 +1,10 @@
 .DS_Store
 .vagrant*
-ansible/roles/*
 !ansible/roles/ansible-ice-templates/
 !ansible/roles/ansible-ice-volumes/
 !ansible/roles/ansible-vvp-bootstrap/
-.vault_password
+ansible/roles/ceph*
+#.vault_password
 *.retry
 *.vdi
 *.vmdk

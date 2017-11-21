@@ -1,0 +1,162 @@
+# -*- encoding: utf-8 -*- 
+# ============LICENSE_START======================================================= 
+# org.onap.vvp/engagementmgr
+# ===================================================================
+# Copyright © 2017 AT&T Intellectual Property. All rights reserved.
+# ===================================================================
+#
+# Unless otherwise specified, all software contained herein is licensed
+# under the Apache License, Version 2.0 (the “License”);
+# you may not use this software except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+#
+# Unless otherwise specified, all documentation contained herein is licensed
+# under the Creative Commons License, Attribution 4.0 Intl. (the “License”);
+# you may not use this documentation except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#             https://creativecommons.org/licenses/by/4.0/
+#
+# Unless required by applicable law or agreed to in writing, documentation
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ============LICENSE_END============================================
+#
+# ECOMP is a trademark and service mark of AT&T Intellectual Property.
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: em-uwsgi
+spec:
+  template:
+    spec:
+      volumes:
+{% if devenv is defined %}
+      - name: em-rsync
+        hostPath:
+          path: /var/devenv/rkt-ice-engagementmgr/django
+{% endif %}
+      - name: site-crt
+        secret:
+          secretName: site-crt
+      - name: em-settings
+        configMap:
+          name: em-settings
+      containers:
+      - name: em-uwsgi
+        image: {{container_uri}}rkt-engagementmgr:{{container_tag}}
+        ports:
+        - containerPort: 80
+        - containerPort: 9000
+        volumeMounts:
+{% if devenv is defined %}
+        - name: em-rsync
+          mountPath: /srv
+{% endif %}
+        - name: em-settings
+          mountPath: /opt/configmaps/settings/ 
+        - name: site-crt
+          mountPath: /opt/secrets/site-crt/
+        env:
+        - name: ENVIRONMENT
+          value: "{{ice_environment}}"
+        - name: PROGRAM_NAME_URL_PREFIX
+          value: "ice"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: key}
+        - name: EMAIL_HOST
+          value: "{{vault_email_host}}"
+        - name: EMAIL_HOST_USER
+          value: "{{vault_email_host_user}}"
+        - name: EMAIL_PORT
+          value: "{{email_port|default(25)}}"
+        - name: EMAIL_HOST_PASSWORD
+          valueFrom:
+            secretKeyRef: {name: email-secret, key: password}
+        - name: PGHOST
+          value: postgresql
+        - name: PGPORT
+          value: "5432"
+        - name: PGDATABASE
+          value: icedb
+        - name: PGUSER
+          value: "{{vault_em_postgresql_user}}"
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef: {name: postgresql-passwords, key: emPassword}
+        - name: DOMAIN
+          value: https://{{domain}}
+        - name: ICE_EM_DOMAIN_NAME
+          value: https://{{em_domain_name}}
+        - name: CONTACT_FROM_ADDRESS
+          value: "{{vault_email_host_user}}"
+        - name: OAUTHLIB_INSECURE_TRANSPORT
+          value: "1"
+        - name: SECRET_WEBHOOK_TOKEN
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: em_webhook_token}
+        - name: SECRET_GITLAB_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef: {name: gitlab-password, key: auth-token}
+        - name: SECRET_JENKINS_PASSWORD
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: jenkins_admin_password}
+        - name: SECRET_CMS_APP_CLIENT_ID
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: cms_app_client_id}
+        - name: SECRET_CMS_APP_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: cms_app_client_secret}
+        - name: STATIC_ROOT
+          value: "/app/htdocs"
+        - name: DJANGO_DEBUG_MODE
+          value: "{{django_debug_mode}}"
+        - name: SLACK_API_TOKEN
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: slack_api_token}
+        - name: ENGAGEMENTS_CHANNEL
+          value: "{{engagements_channel | default('')}}"
+        - name: ENGAGEMENTS_NOTIFICATIONS_CHANNEL
+          value: "{{engagements_notifications_channel | default('')}}"
+        - name: DEVOPS_CHANNEL
+          value: "{{devops_channel | default('')}}"
+        - name: DEVOPS_NOTIFICATIONS_CHANNEL
+          value: "{{devops_notifications_channel | default('')}}"
+        - name: S3_HOST
+          value: "{{s3_dns_name}}"
+        - name: S3_PORT
+          value: "443"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: aws_access_key_id}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: aws_secret_access_key}
+{% if enable_liveness_probes %}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9000
+          initialDelaySeconds: {{livenessProbe_initialDelaySeconds.em | default(90)}}
+          periodSeconds: 15
+          timeoutSeconds: 10
+{% endif %}
+        command: ["/docker-entrypoint.sh", "/usr/local/bin/uwsgi", "--ini", "/opt/configmaps/settings/uwsgi.ini", {% if devenv is defined %}"--py-auto-reload" , "3",{% endif %}"--static-map", "/static=/app/htdocs"]
+    metadata:
+      labels:
+        run: em-uwsgi
