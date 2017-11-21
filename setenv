@@ -40,8 +40,10 @@
 pushd $(dirname $BASH_SOURCE[0]) > /dev/null
 export DEVKIT_DIR=`pwd -P`
 popd > /dev/null
-
-# Make sure we have ansible installed
+export DEVKIT_DIR=`pwd -P`
+echo $DEVKIT_DIR
+echo "DEVKIT DIR ^^"
+echo "# Make sure we have ansible installed"
 REQUIREMENTS="ansible vagrant"
 for req in $REQUIREMENTS
 do
@@ -52,13 +54,13 @@ do
     fi
 done
 
-# Make sure we have the vvp-empty box installed
+echo "# Make sure we have the vvp-empty box installed"
 if [[ -z $(vagrant box list | grep vvp-empty) ]]
 then
   bin/vvp-install-box
 fi
-
-select ENVFILE in `find ./zones/ -name devkit_environment_*`;
+echo "# Create ENV vars"
+select ENVFILE in `find ./zones/ -name "devkit_environment_*"`;
 do
    source $ENVFILE
    break
@@ -66,6 +68,7 @@ done
 
 # Grab ansible requirements
 echo "Installing devkit's required ansible roles"
+echo $DEVKIT_DIR
 ansible-galaxy install -r ${DEVKIT_DIR}/ansible/requirements.yml
 
 echo "Devkit zone setup complete"

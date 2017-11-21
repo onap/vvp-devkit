@@ -1,5 +1,6 @@
-# -*- encoding: utf-8 -*- 
-# ============LICENSE_START======================================================= 
+#!/usr/bin/python
+# -*- encoding: utf-8 -*-
+# ============LICENSE_START===============================================
 # org.onap.vvp/engagementmgr
 # ===================================================================
 # Copyright © 2017 AT&T Intellectual Property. All rights reserved.
@@ -36,7 +37,7 @@
 # ============LICENSE_END============================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
-#!/usr/bin/python
+
 import os
 from ansible.module_utils.basic import AnsibleModule
 
@@ -68,6 +69,7 @@ def main():
     else:
         msg = "Could not apply manifest"
         module.fail_json(msg=msg + " " + stderr)
+
 
 if __name__ == "__main__":
     main()
