@@ -39,6 +39,7 @@
 # -*- mode: ruby -*-
 # # vi: set ft=ruby :
 require_relative 'lib/vagrant_provision.rb'
+require 'yaml'
 
 Vagrant.require_version ">= 1.6.0"
 if ENV["VVP_DEVKIT"].nil? or ENV["VVP_DEVKIT"].downcase == "single"
