@@ -86,3 +86,10 @@ rgws:
   - name: ceph-01
     ip: 10.252.0.21
 radosgw_civetweb_port: "8080"
+
+dockerconfig:
+  nexus3.onap.org:10001:
+      username: "{{ vault_onap_user }}"
+      password: "{{ vault_onap_password }}"
+      email: "{{ vault_onap_email }}"
+

@@ -39,12 +39,58 @@
 ---
 # cert for secure https
 # https://stackoverflow.com/questions/10175812/how-to-create-a-self-signed-certificate-with-openssl#10176685
-# site_pem_cert:
-# site_pem_key:
-# site_pem: |
-#     {{site_pem_cert}}
-#     {{site_pem_key}}
-site_pem:
+site_pem_cert: |
+  -----BEGIN CERTIFICATE-----
+  MIIDEDCCAfgCCQDhahVKE9/eUjANBgkqhkiG9w0BAQsFADBKMRAwDgYDVQQKDAdF
+  eGFtcGxlMRAwDgYDVQQLDAdleGFtcGxlMSQwIgYDVQQDDBtkZXZlbG9wbWVudC52
+  dnAuZXhhbXBsZS5jb20wHhcNMTcxMjI0MTUzOTA3WhcNMTgxMjI0MTUzOTA3WjBK
+  MRAwDgYDVQQKDAdFeGFtcGxlMRAwDgYDVQQLDAdleGFtcGxlMSQwIgYDVQQDDBtk
+  ZXZlbG9wbWVudC52dnAuZXhhbXBsZS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IB
+  DwAwggEKAoIBAQCkvNGXe+bdvL2kvrP2L3WABt2WCFoZ2Pn8Px0eEsRiJHVD0eWz
+  rgJYHFJu0C0cK9NYSKxVVI8LnKH7Ny5MFfM4Tqyr3UEOLs+fSwaAqM5tSyZU/tEK
+  ractA7bi9fDk2lkcs+LLuZMqGPZ37UZcZwsUQ0BONHP668LqkWqT9hNLIN4ejInr
+  32WA3Y7hPNd8Cj+AaLt1x2cXYzi9hrE5l3h9ofkOpXsgDzeIHlp4jJ6kXXQf8UM5
+  1viqa2CWXHBHEG+5eftLSaeE6LAlNt5IJ6LcWEZgNtXr2es4LJC3FjXrv0gc04Cp
+  U2OfizpbhT11cLGaeXOq1cUCXNIb4FcJApoXAgMBAAEwDQYJKoZIhvcNAQELBQAD
+  ggEBAFGPDG9iurAhUKbFkY97xLA443U01bdwi7eAT5T9qo/RzOwcbuKWXVm1k5HK
+  CQO81nlLqLQwhI1+uTTmR41epuJxyGIaDgUySB+8fLzyRSIFaxKD+UeVPgipDNZs
+  h0sKSKrO6MoWzMLUYvdZRw6VIc+UpSCqPY+FKUBUHZtMpSFLnhHjRvVkiP4VvFXj
+  b7jQzHughzeITygws42fKK/MK7wQ6byaMVRbPbQKPAXNxd/UrSPeX+RzKRWOZ6R8
+  Ulyp7dezXCP77UaTZTsxwlurPQIZNMshDxE/SbWt0Q1g28rj5KfAjoZs5Tg/gmQ8
+  LLKI/b1OvKohaANGZ6We5U+ceeU=
+  -----END CERTIFICATE-----
+site_pem_key: |
+  -----BEGIN PRIVATE KEY-----
+  MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCkvNGXe+bdvL2k
+  vrP2L3WABt2WCFoZ2Pn8Px0eEsRiJHVD0eWzrgJYHFJu0C0cK9NYSKxVVI8LnKH7
+  Ny5MFfM4Tqyr3UEOLs+fSwaAqM5tSyZU/tEKractA7bi9fDk2lkcs+LLuZMqGPZ3
+  7UZcZwsUQ0BONHP668LqkWqT9hNLIN4ejInr32WA3Y7hPNd8Cj+AaLt1x2cXYzi9
+  hrE5l3h9ofkOpXsgDzeIHlp4jJ6kXXQf8UM51viqa2CWXHBHEG+5eftLSaeE6LAl
+  Nt5IJ6LcWEZgNtXr2es4LJC3FjXrv0gc04CpU2OfizpbhT11cLGaeXOq1cUCXNIb
+  4FcJApoXAgMBAAECggEAfiunkw/waA+wZ8cvafQ7WAzqFYjcCUPnYsyr7maNRmWJ
+  8qGF/jHd1cILWJfUlOjz+3/djZUv4cLbRN6kdN2y5INNOGxC8SvlFKmPl2ayg361
+  Iw/u5vDNQ2q+3eFj2MNq0NLtdv7wuaNY0c1GwGqjT6eaTstZsOp05Nbu+9fSOwz8
+  prE9EqSailpc0ZH03ToBCcViLPQ7DCyi3wD/LqZYyjnsJvpVV1FWjZMdMB5BLyP5
+  vZH9BMbCA/kf+P5XV0mQOkqi79StlHGsmbwp9c5DRvbPvwMgluJjT4Q5veusmcZ3
+  QxdjWUZKyvTSl6BaUWKfJLa0hOXtuQpyTxa067KTMQKBgQDSkSQs8hhgaXLARC1e
+  ql1+oY5ScrLUowAlrh5v1F9sq024I+EtOkwTdvdl3SB84nhrD5YCbaqyVF/n4TZA
+  h2vdPulgzNOAOAHyn42jznBndqkjit+uHNQPVV07o5ph957NCOnW4QOgMHxXkl4s
+  YQ99UbBfNgpL/OcCT9hEnywwzQKBgQDISD/Wjh0Vw6gtUyTr1T2T4KqsKOGMsHgX
+  mejFBgAZhy3RA4qJpKZGO9e2+Eo1dR7Q+V239xZW/VtFCrgKaCD6oDXQP3H+p/wV
+  oEz3l2h1dkJlXIWugVTcNn8cGyMSR/A1A2pUP6C0E2jI1WYDiOePvqRU6is18tf0
+  Cp27g5NmcwKBgFHE/1Fc6k52ZJN5Zkz+x7PnNQebdwrQCbyYM0WmKTBgDZxWgpk3
+  rFdauZQbHQSiRbT9pnlm8QSzc1LuyEyiyiZuyd5HbFK8bTU09KIKBuiG0gP1aAuL
+  MmaJ9dy1Gby1ljt1HKnPU8MfUQoI0v1U69j0ohM3PyRnH6ZsL0Xmshh5AoGAYOKK
+  dykCKuAeP+bDqo3aHuoExgl0qpFHVutuLbksXS0GXeDfqJwMj1ctj+ZmR5vjj2XC
+  D1co6GXhO/Hme6pJodPUlGvMokry6CdGdFM7Be9ySQRL6tHHkkuOi7MY8SP5sDt5
+  uU2aWOI2w0hv8+/LTL8FUcqBorRaAUUNboNEz78CgYEAqtmr4bbXydg4ZErF9sfV
+  Hx5HYt40yMPj2kGxRZonAv/ipphzB4TWffErGB6X/w3gQjekfzKjE5NkHeo3+DB+
+  o1jsPrIxkpYXK02vSV7tYvyZs0AXiFrnldPdK9a4tmXxadD0fmNJLfSHpwKU5wPj
+  NGe3PnkOZLRT80uOZEi1Lxg=
+  -----END PRIVATE KEY-----
+site_pem: |
+    {{site_pem_cert}}
+    {{site_pem_key}}
 
 # EM database
 vault_em_postgresql_user: em_postgresuser
@@ -61,8 +107,13 @@ vault_em_secret_key: "#91e__w3k=781@y(e_#6hu6t&h254#u)&bj+m9thx%k!6^*06r"
 
 # Information for sending email from the platform
 vault_email_host: 'localhost'
-vault_email_host_user:
-vault_email_host_password:
+vault_email_host_user: example
+vault_email_host_password: EXAMPLE
+
+vault_onap_user: "docker"
+vault_onap_password: "docker"
+vault_onap_email: "email@email.com"
+
 
 # pwgen -1 32
 vault_engagementmgr_webhook_token: Aip7ohx1eiHaeshoh9shailu9eex7tha

@@ -48,9 +48,11 @@ spec:
       labels:
         run: gitlab
     spec:
+      imagePullSecrets:
+      - name: onapkey
       containers:
       - name: gitlab
-        image: {{container_uri}}rkt-gitlab:{{container_tag}}
+        image: {{container_uri}}gitlab:{{container_tag}}
         ports:
         - containerPort: 80
         - containerPort: 22

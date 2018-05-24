@@ -43,19 +43,14 @@ metadata:
   name: em-settings
   namespace: default
 data:
-  uwsgi.ini: |
-    [uwsgi]
-    uwsgi-socket = :80
-    plugin = python
-    chdir = /srv
-    module = vvp.wsgi:application
-    master = True
-    pidfile = /tmp/project-master.pid
-    vacuum = True
-    max-requests = 5000
-    enable-threads = True
-    stats = 0.0.0.0:9000
-    stats-http = True
+  gunicorn.ini: |
+    bind = ":80"
+    chdir = '/srv'
+    pidfile = '/tmp/ice-project-master.pid'
+    backlog = '5000'
+    errorlog = '-'
+    loglevel = 'info'
+
   __init__.py: |
     """
     Django settings for VVP project.
@@ -93,7 +88,10 @@ data:
 
     ENVIRONMENT = os.environ['ENVIRONMENT']
     PROGRAM_NAME_URL_PREFIX = os.environ['PROGRAM_NAME_URL_PREFIX']
-
+    SERVICE_PROVIDER = os.environ['SERVICE_PROVIDER']
+    PROGRAM_NAME = os.environ['PROGRAM_NAME']
+    SERVICE_PROVIDER_DOMAIN = os.environ['SERVICE_PROVIDER_DOMAIN']
+    
     # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
     SECRET_KEY = os.environ["SECRET_KEY"]
 
@@ -305,7 +303,7 @@ data:
     # VVP Related Configuration
     #############################
     CONTACT_FROM_ADDRESS =  os.getenv('CONTACT_FROM_ADDRESS', 'dummy@example.com')
-    CONTACT_EMAILS = [s.strip() for s in os.getenv('CONTACT_EMAILS', 'dummy@example.com')
+    CONTACT_EMAILS = [s.strip() for s in os.getenv('CONTACT_EMAILS', 'user@example.com').split(',') if s]
     DOMAIN = os.getenv('EM_DOMAIN_NAME')
     TOKEN_EXPIRATION_IN_HOURS = 48
     DAILY_SCHEDULED_JOB_HOUR = 20

@@ -182,7 +182,8 @@ systemd:
           --pod-manifest-path=/etc/kubernetes/manifests \
           --hostname-override={{.domain_name}} \
           --cluster_dns={{.k8s_dns_service_ip}} \
-          --cluster_domain=cluster.local
+          --cluster_domain=cluster.local \
+          --pod-infra-container-image="docker.io/kubernetes/pause"
         ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
         Restart=always
         RestartSec=10
@@ -354,13 +355,14 @@ storage:
               - --service-account-key-file=/etc/kubernetes/ssl/apiserver-key.pem
               - --runtime-config=extensions/v1beta1/networkpolicies=true
               - --anonymous-auth=false
+              - --storage-backend=etcd2
               livenessProbe:
                 httpGet:
                   host: 127.0.0.1
-                  port: 8080
+                  port: 10253
                   path: /healthz
-                initialDelaySeconds: 15
-                timeoutSeconds: 15
+                initialDelaySeconds: 15000
+                timeoutSeconds: 1500
               ports:
               - containerPort: {{.k8s_controller_port}}
                 hostPort: {{.k8s_controller_port}}

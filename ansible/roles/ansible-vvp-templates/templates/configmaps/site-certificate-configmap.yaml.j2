@@ -1,0 +1,30 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: site-certificate
+  namespace: default
+data:
+  site.crt: |
+    {{ site_pem_cert|indent }}
+  wrapper.sh: |
+    #!/bin/sh
+    # This script is meant to be used as a wrapper, so that it can be easily
+    # used with docker or kubernetes' container command specification.
+    #
+    # Kubernetes' volumeMount creates symlinks for configMapped files at the
+    # target directory.
+    # Alpine's update-ca-certificates ignores symlinks.
+    # So we must contrive to copy the contents of the mounted cert (a symlink)
+    # into place as a normal file.
+    dev_cert="${0%/*}/site.crt"
+    echo >&2 "$0: Checking for site CA certificate at $dev_cert..."
+    if [ -s "$dev_cert" ]; then
+        echo >&2 "$0: Updating container CA certificate bundle with site certificate..."
+        cp -L "$dev_cert" /usr/local/share/ca-certificates/
+        update-ca-certificates
+    else
+        echo >&2 "$0: No site CA certificate found."
+    fi
+    echo >&2 "$0: Launching command: $@"
+    exec "$@"

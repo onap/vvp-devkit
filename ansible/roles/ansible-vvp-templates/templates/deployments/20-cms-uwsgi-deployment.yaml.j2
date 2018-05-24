@@ -44,9 +44,11 @@ metadata:
 spec:
   template:
     spec:
+      imagePullSecrets:
+      - name: onapkey
       containers:
       - name: cms-uwsgi
-        image: {{container_uri}}rkt-ice-cms:{{container_tag}}
+        image: {{container_uri}}cms:{{container_tag}}
         ports:
         - containerPort: 80
         - containerPort: 9000
@@ -119,7 +121,7 @@ spec:
           periodSeconds: 15
           timeoutSeconds: 10
 {% endif %}
-        command: ["/docker-entrypoint.sh", "/usr/local/bin/uwsgi", "--ini", "/opt/configmaps/settings/uwsgi.ini", {% if devenv is defined %}"--py-auto-reload" , "3",{% endif %}"--static-map", "/static=/app/htdocs"]
+        command: ["/docker-entrypoint.sh", "/usr/local/bin/gunicorn", "-c", "/opt/configmaps/settings/gunicorn.ini", "cms.wsgi:application", {% if devenv is defined %}"--reload"{% endif %}]
         volumeMounts:
         - name: settings
           mountPath: /opt/configmaps/settings/

@@ -44,11 +44,16 @@ metadata:
 spec:
   template:
     spec:
+      imagePullSecrets:
+      - name: onapkey
 
       containers:
       - name: imagescanner-worker
-        image: {{container_uri}}ice-image-scanner:{{container_tag}}
-        command: ["/usr/local/bin/imagescanner-worker"]
+        image: {{container_uri}}image-scanner:{{container_tag}}
+        command:
+        - "sh"
+        - "/opt/site-certificate/wrapper.sh"
+        - "/usr/local/bin/imagescanner-worker"
         securityContext:
           privileged: true
         volumeMounts:
@@ -58,9 +63,30 @@ spec:
           mountPath: /dev
         - name: logs
           mountPath: /var/log/imagescanner
+        - name: imagescanner-settings
+          mountPath: /opt/imagescanner-settings
+        - name: site-certificate
+          mountPath: /opt/site-certificate
+        env:
+        - name: PYTHONPATH
+          value: /opt/imagescanner-settings
+        - name: S3_HOST
+          value: "{{s3_dns_name}}"
+        - name: S3_PORT
+          value: "443"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: aws_access_key_id}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: aws_secret_access_key}
+        - name: SECRET_JENKINS_PASSWORD
+          value: ''
+        - name: REQUESTS_CA_BUNDLE
+          value: /etc/ssl/certs/ca-certificates.crt
 
       - name: notifications-worker
-        image: {{container_uri}}ice-image-scanner:{{container_tag}}
+        image: {{container_uri}}image-scanner:{{container_tag}}
         command: ["/usr/local/bin/notifications-worker"]
         securityContext:
           privileged: true
@@ -70,9 +96,17 @@ spec:
             secretKeyRef: {name: slack-tokens, key: notifications}
         - name: DOMAIN
           value: "{{em_internal_dns_name}}"
+        - name: PYTHONPATH
+          value: /opt/imagescanner-settings
+        - name: SECRET_JENKINS_PASSWORD
+          valueFrom:
+            secretKeyRef: {name: em-secret, key: jenkins_admin_password}
+        volumeMounts:
+        - name: imagescanner-settings
+          mountPath: /opt/imagescanner-settings
 
       - name: imagescanner-frontend
-        image: {{container_uri}}ice-image-scanner:{{container_tag}}
+        image: {{container_uri}}image-scanner:{{container_tag}}
         command: ["/usr/local/bin/imagescanner-frontend"]
         {#
             FIXME: No, the frontend does not require a privileged container.
@@ -87,9 +121,13 @@ spec:
         volumeMounts:
         - name: logs
           mountPath: /var/log/imagescanner
+        - name: imagescanner-settings
+          mountPath: /opt/imagescanner-settings
         env:
         - name: DEFAULT_SLACK_CHANNEL
           value: "#notifications"
+        - name: SECRET_JENKINS_PASSWORD
+          value: ''
 
       volumes:
       - name: imagescanner-ssh
@@ -101,6 +139,12 @@ spec:
           path: /dev
       - name: logs
         emptyDir: {}
+      - name: imagescanner-settings
+        configMap:
+          name: imagescanner-settings
+      - name: site-certificate
+        configMap:
+          name: site-certificate
 
     metadata:
       labels:

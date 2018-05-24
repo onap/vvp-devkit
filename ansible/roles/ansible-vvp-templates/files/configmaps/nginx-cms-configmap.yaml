@@ -58,8 +58,12 @@ data:
             client_max_body_size 75M;   # adjust to taste
 
             location / {
-                uwsgi_pass  cms_upstream;
-                include     /etc/nginx/uwsgi_params;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto https;
+                proxy_set_header Host $http_host;
+                proxy_redirect off;
+                
+                proxy_pass http://cms-uwsgi;
             }
         }
         server {

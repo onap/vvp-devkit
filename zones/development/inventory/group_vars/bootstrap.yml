@@ -38,7 +38,7 @@
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 coreos_channel: "stable"
 coreos_version: "1409.7.0"
-k8s_version: "v1.5.2_coreos.2"
+k8s_version: "v1.6.13_coreos.0"
 container_runtime: docker
 ops_public_interface: eth2
 ops_management_interface: eth1

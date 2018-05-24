@@ -48,9 +48,11 @@ spec:
       labels:
         run: portal
     spec:
+      imagePullSecrets:
+      - name: onapkey
       containers:
       - name: portal
-        image: {{container_uri}}rkt-ice-portal:{{container_tag}}
+        image: {{container_uri}}portal:{{container_tag}}
         ports:
         - containerPort: 8181
         command: ["nginx", "-g", "daemon off;", "-c", "/tmp/nginx.conf"]
@@ -68,3 +70,10 @@ spec:
           items:
           - key: file
             path: nginx.conf
+          - key: service_provider.json
+            path: service_provider.json
+{% if devenv is defined %}
+      - name: portal-rsync
+        hostPath:
+          path: /var/devenv/rkt-ice-portal/d2ice.att.io/app
+{% endif %}

@@ -43,20 +43,13 @@ metadata:
   name: ci-settings
   namespace: default
 data:
-  uwsgi.ini: |
-    [uwsgi]
-    uwsgi-socket = :80
-    http = :8282
-    plugin = python
-    chdir = /app
-    module = web.wsgi:application
-    master = True
-    pidfile = /tmp/project-master.pid
-    vacuum = True
-    max-requests = 5000
-    enable-threads = True
-    stats = 0.0.0.0:9000
-    stats-http = True
+  gunicorn.ini: |
+    bind = ":8282"
+    chdir = '/app'
+    pidfile = '/tmp/ice-project-master.pid'
+    backlog = '5000'
+    errorlog = '-'
+    loglevel = 'info'
   __init__.py: |
     import os
     from datetime import datetime
@@ -68,6 +61,9 @@ data:
 
     ICE_ENVIRONMENT = os.environ['ICE_ENVIRONMENT']
     PROGRAM_NAME_URL_PREFIX = os.environ['PROGRAM_NAME_URL_PREFIX']
+    SERVICE_PROVIDER = os.environ['SERVICE_PROVIDER']
+    PROGRAM_NAME = os.environ['PROGRAM_NAME']
+    SERVICE_PROVIDER_DOMAIN = os.environ['SERVICE_PROVIDER_DOMAIN']
 
     # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
     SECRET_KEY = os.environ["SECRET_KEY"]
@@ -290,7 +286,7 @@ data:
     # ICE-CI Related Configuration
     #############################
     ICE_CONTACT_FROM_ADDRESS = os.getenv('ICE_CONTACT_FROM_ADDRESS')
-    ICE_CONTACT_EMAILS = list(os.getenv('ICE_CONTACT_EMAILS')
+    ICE_CONTACT_EMAILS = list(os.getenv('ICE_CONTACT_EMAILS','user@example.com').split(','))
     ICE_CI_ENVIRONMENT_NAME = os.getenv('ICE_CI_ENVIRONMENT_NAME', 'Dev') # Dev / Docker / Staging
     ICE_EM_URL = "{domain}/{prefix}".format(domain=os.environ['ICE_EM_DOMAIN_NAME'], prefix=PROGRAM_NAME_URL_PREFIX)
     ICE_PORTAL_URL = os.environ['ICE_DOMAIN']

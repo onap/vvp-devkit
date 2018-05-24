@@ -115,6 +115,18 @@
   with_items:
   - 443
   - 80
+  
+# dnsmask prereq - Allow ping between all hosts
+- name: Allow Ping from Outside to Inside
+  shell: |
+    iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+    iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
+
+- name: Allow Ping from Inside to Outside
+  shell: |
+    iptables -A OUTPUT -p icmp --icmp-type echo-request -j ACCEPT
+    iptables -A INPUT -p icmp --icmp-type echo-reply -j ACCEPT
+
 - name: Drop INPUT
   shell: iptables -P INPUT DROP
   tags:

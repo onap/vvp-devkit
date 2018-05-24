@@ -36,13 +36,21 @@
 # ============LICENSE_END============================================
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
+
+# An Option to force update of requirements in case of updated version 
+ARG=$1
+if [ "$1" = "-f" ]; then
+	echo "Param: $1"
+  force_option="--force"
+fi
+
 # Get the current devkit directory
-pushd $(dirname $BASH_SOURCE[0]) > /dev/null
+#pushd $(dirname $BASH_SOURCE[0]) > /dev/null
 export DEVKIT_DIR=`pwd -P`
-popd > /dev/null
-export DEVKIT_DIR=`pwd -P`
+#popd > /dev/null
+#export DEVKIT_DIR=`pwd -P`
 echo $DEVKIT_DIR
-echo "DEVKIT DIR ^^"
+#echo "DEVKIT DIR ^^"
 echo "# Make sure we have ansible installed"
 REQUIREMENTS="ansible vagrant"
 for req in $REQUIREMENTS
@@ -69,6 +77,6 @@ done
 # Grab ansible requirements
 echo "Installing devkit's required ansible roles"
 echo $DEVKIT_DIR
-ansible-galaxy install -r ${DEVKIT_DIR}/ansible/requirements.yml
+ansible-galaxy install ${force_option} -r ${DEVKIT_DIR}/ansible/requirements.yml
 
 echo "Devkit zone setup complete"
