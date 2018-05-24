@@ -43,20 +43,13 @@ metadata:
   name: ci-settings
   namespace: default
 data:
-  uwsgi.ini: |
-    [uwsgi]
-    uwsgi-socket = :80
-    http = :8282
-    plugin = python
-    chdir = /app
-    module = web.wsgi:application
-    master = True
-    pidfile = /tmp/project-master.pid
-    vacuum = True
-    max-requests = 5000
-    enable-threads = True
-    stats = 0.0.0.0:9000
-    stats-http = True
+  gunicorn.ini: |
+    bind = ":8282"
+    chdir = '/app'
+    pidfile = '/tmp/ice-project-master.pid'
+    backlog = '5000'
+    errorlog = '-'
+    loglevel = 'info'
   __init__.py: |
     import os
     from datetime import datetime

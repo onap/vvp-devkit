@@ -164,7 +164,7 @@ spec:
           periodSeconds: 15
           timeoutSeconds: 10
 {% endif %}
-        command: ["/docker-entrypoint.sh", "/usr/local/bin/uwsgi", "--ini", "/opt/configmaps/settings/uwsgi.ini", {% if devenv is defined %}"--py-auto-reload" , "3",{% endif %}"--static-map", "/static=/app/htdocs"]
+        command: ["/docker-entrypoint.sh", "/usr/local/bin/gunicorn", "-c", "/opt/configmaps/settings/gunicorn.ini", "vvp.wsgi:application", {% if devenv is defined %}"--reload"{% endif %}]
     metadata:
       labels:
         run: em-uwsgi

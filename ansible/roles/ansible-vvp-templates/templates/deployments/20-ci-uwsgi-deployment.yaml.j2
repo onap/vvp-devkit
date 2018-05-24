@@ -166,7 +166,7 @@ spec:
           initialDelaySeconds: 90
           periodSeconds: 15
 {% endif %}
-        command: ["/app/docker-entrypoint.sh", "/usr/local/bin/uwsgi", "--ini", "/opt/configmaps/settings/uwsgi.ini", "--static-map", "/static=/app/htdocs" {% if devenv is defined %}, "--py-auto-reload" , "3"{% endif %}]
+        command: ["/app/docker-entrypoint.sh", "/usr/local/bin/gunicorn", "-c", "/opt/configmaps/settings/gunicorn.ini", "web.wsgi:application", {% if devenv is defined %}"--reload"{% endif %}]
     metadata:
       labels:
         run: ci-uwsgi
