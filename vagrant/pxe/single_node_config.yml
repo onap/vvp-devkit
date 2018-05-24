@@ -40,12 +40,13 @@ boxen:
   - name: ops-01
     box: centos/7
     ips: ['10.252.0.2', "10.220.220.2"]
-    macs: []
+    macs: ["08002767736a" , "0800278a5a17"]
     cpus: 1
     cpu: "50"
     memory: "1024"
     groups: ["bootstrap", "centos",]
     vagrant_ssh_port: 2502
+    nic_type: 82540EM
 
   - name: ceph-01
     box: centos/7
@@ -56,6 +57,7 @@ boxen:
     macs: ["0800276695A1","0800276695A2"]
     groups: ["ceph", "osds", "mons", "rgws", "rbdhost", "centos"]
     vagrant_ssh_port: 2521
+    nic_type: 82540EM
 
   - name: coreos-01
     box: vvp-empty
@@ -66,6 +68,7 @@ boxen:
     ips: ["10.252.0.12", "10.220.220.12"]
     groups: ["coreos", "container-hosts", "fleetctl-host"]
     vagrant_ssh_port: 2512
+    nic_type: "virtio"
 
 
 hosts:

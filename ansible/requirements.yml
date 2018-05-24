@@ -37,7 +37,7 @@
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 - src: https://github.com/ceph/ansible-ceph-common.git
-  version: v2.2.10
+  version: v2.2.12
   name: ceph.ceph-common
 
 - src: https://github.com/ceph/ansible-ceph-docker-common.git
@@ -45,13 +45,13 @@
   name: ceph.ceph-docker-common
 
 - src: https://github.com/ceph/ansible-ceph-rgw.git
-  version: v2.2.10
+  version: v2.2.12
   name: ceph.ceph-rgw
 
 - src: https://github.com/ceph/ansible-ceph-mon.git
-  version: v2.2.10
+  version: v2.2.12
   name: ceph.ceph-mon
 
 - src: https://github.com/ceph/ansible-ceph-osd.git
-  version: v2.2.10
+  version: v2.2.12
   name: ceph.ceph-osd

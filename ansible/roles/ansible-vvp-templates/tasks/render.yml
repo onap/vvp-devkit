@@ -55,7 +55,6 @@
     dest: "{{k8_config_dir}}/{{item|dirname|basename}}/{{item|basename|splitext|first}}"
   with_fileglob:
     - ../templates/configmaps/*
-    - ../templates/jobs/*
     - ../templates/deployments/*
     - ../templates/secrets/*
     - ../templates/services/*

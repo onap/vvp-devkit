@@ -1,0 +1,39 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: portal-nginx-config
+  namespace: default
+data:
+  file: |
+    pid /nginx.pid;
+    error_log  /dev/stdout warn;
+
+    http {
+      access_log /dev/stdout;
+      server {
+        listen 0.0.0.0:8181;
+
+        location / {
+        include /etc/nginx/mime.types;
+        root /usr/share/nginx/html/;
+        }
+
+      }
+
+    }
+
+    events {
+        worker_connections  4096;
+    }
+
+  service_provider.json: |
+    {
+      "serviceProvider": {
+          "name": "{{service_provider}}"
+      },
+      "program": {
+          "name": "{{program_name}}"
+      }
+    }
+

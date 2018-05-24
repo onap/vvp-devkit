@@ -95,7 +95,7 @@ data:
    frontend portal
        mode http
        redirect scheme https if !{ ssl_fc }
-       acl is_api_call path_beg -i /ice
+       acl is_api_call path_beg -i /vvp
        acl is_s3       hdr_beg(host) s3.  staging-s3.  dev-s3.
        use_backend api if is_api_call
        use_backend s3 if is_s3

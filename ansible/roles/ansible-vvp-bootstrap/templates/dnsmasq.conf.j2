@@ -53,19 +53,19 @@ dhcp-option=#{{ops_management_interface}},6
 enable-tftp
 tftp-root=/var/lib/tftpboot
 {% if pxe_boot %}
-    {% if pxe_chainload %}
+{% if pxe_chainload %}
 dhcp-userclass=set:iceundi,ICEPXE
 dhcp-boot=tag:coreos,tag:#iceundi,iceundionly.kpxe
-    {% else %}
+{% else %}
 dhcp-userclass=set:iceundi,iPXE
 dhcp-boot=tag:coreos,tag:#iceundi,undionly.kpxe
-    {% endif %}
+{% endif %}
 dhcp-boot=tag:iceundi,http://{{ops_management_ip}}:8080/boot.ipxe
 {% endif %}
 {% for host in hosts %}
-    {% for config in host.dnsmasq_config %}
+{% for config in host.dnsmasq_config %}
 dhcp-host={{config}}
-    {% endfor %}
+{% endfor %}
 {% endfor %}
 dhcp-ignore=tag:#known
 log-queries

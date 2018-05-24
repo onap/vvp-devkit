@@ -37,8 +37,8 @@
 #
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 enable_liveness_probes: false
-container_uri: example.com/vvp
-container_tag: develop
+container_uri: nexus3.onap.org:10001/openecomp/vvp/
+container_tag: latest
 k8_config_dir: "{{inventory_dir}}/../k8"
 external_ips:
 - 10.220.220.12
@@ -70,3 +70,7 @@ jenkins_admin_config_xml: |
       </hudson.security.HudsonPrivateSecurityRealm_-Details>
     </properties>
   </user>
+program_name_url_prefix: vvp
+service_provider: NA
+service_provider_domain: na.com
+program_name: VVP

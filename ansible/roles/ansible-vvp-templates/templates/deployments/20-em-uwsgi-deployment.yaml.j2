@@ -56,9 +56,11 @@ spec:
       - name: em-settings
         configMap:
           name: em-settings
+      imagePullSecrets:
+      - name: onapkey
       containers:
       - name: em-uwsgi
-        image: {{container_uri}}rkt-engagementmgr:{{container_tag}}
+        image: {{container_uri}}engagementmgr:{{container_tag}}
         ports:
         - containerPort: 80
         - containerPort: 9000
@@ -75,7 +77,13 @@ spec:
         - name: ENVIRONMENT
           value: "{{ice_environment}}"
         - name: PROGRAM_NAME_URL_PREFIX
-          value: "ice"
+          value: "{{program_name_url_prefix}}"
+        - name: SERVICE_PROVIDER
+          value: "{{service_provider}}"
+        - name: PROGRAM_NAME
+          value: "{{program_name}}"
+        - name: SERVICE_PROVIDER_DOMAIN
+          value: "{{service_provider_domain}}"
         - name: SECRET_KEY
           valueFrom:
             secretKeyRef: {name: em-secret, key: key}
