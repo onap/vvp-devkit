@@ -7,7 +7,6 @@ ansible/roles/ceph*
 #.vault_password
 *.retry
 *.vdi
-*.vmdk
 zones/*/fetch/*
 zones/*/k8
 fetch/*
