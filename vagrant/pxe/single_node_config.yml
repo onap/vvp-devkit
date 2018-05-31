@@ -68,7 +68,7 @@ boxen:
     ips: ["10.252.0.12", "10.220.220.12"]
     groups: ["coreos", "container-hosts", "fleetctl-host"]
     vagrant_ssh_port: 2512
-    nic_type: "virtio"
+    nic_type: 82540EM
 
 
 hosts:
