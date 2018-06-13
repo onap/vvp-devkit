@@ -38,7 +38,7 @@
 # ECOMP is a trademark and service mark of AT&T Intellectual Property.
 enable_liveness_probes: false
 container_uri: nexus3.onap.org:10001/onap/vvp/
-container_tag: 1.0.0
+container_tag: 1.0.0-latest
 k8_config_dir: "{{inventory_dir}}/../k8"
 external_ips:
 - 10.220.220.12
