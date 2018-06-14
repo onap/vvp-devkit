@@ -126,7 +126,7 @@ vault_jenkins_admin_password: koiyeBaiTh3kaiNg
 vault_gitlab_admin_password: ao6ij6wohWeiqu4e
 
 # python3 -c 'import bcrypt as b;print(b.hashpw(b"<password>",b.gensalt(rounds=10, prefix=b"2a")).decode())'
-vault_jenkins_admin_password_hash: $10$n2WJZasbQkd8PdySxQDo1uB67Wv7QfG0tvKuidbLC4w1Ss6p3eZEq
+vault_jenkins_admin_password_hash: $2a$10$DriuKu8Oq7iihmv/4o9J8uzrh6BUAiKnz3.3mD1pCogsPrg9n63ZW
 
 # ssh-keygen -t ed25519
 vault_jenkins_deploy_key: | 
